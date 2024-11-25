@@ -95,6 +95,8 @@ public class SellController {
         addButton.setOnAction(event -> {
             try {
                 addToCart();
+                nameField.clear();
+                numField.clear();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -103,6 +105,8 @@ public class SellController {
         restartButton.setOnAction(event -> {
             try {
                 resetCart();
+                nameField.clear();
+                numField.clear();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -111,6 +115,8 @@ public class SellController {
         removeButton.setOnAction(event -> {
             try {
                 deleteProduct();
+                nameField.clear();
+                numField.clear();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -277,15 +283,6 @@ public class SellController {
 
     private List<CatalogView> getModels() throws SQLException {
         List<CatalogView> models = new ArrayList<>();
-
-        try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog'");
-            if (!rs.next()) {
-                System.out.println("Table 'catalog' does not exist.");
-            } else {
-                System.out.println("Table 'catalog' exists.");
-            }
-        }
 
         String sql = """
                 select id, category, name , price, num
