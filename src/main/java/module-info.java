@@ -13,6 +13,7 @@ module shop.myshop {
     requires java.sql;
     requires java.net.http;
     requires com.google.gson;
+    requires org.testng;
 
     opens shop.myshop to javafx.fxml;
     exports shop.myshop;

@@ -15,6 +15,12 @@
 
   <dependencies>
 
+
+
+
+
+
+
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
@@ -138,6 +144,18 @@
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
       <version>20240205</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>7.10.2</version>
+      <scope>compile</scope>
     </dependency>
 
   </dependencies>

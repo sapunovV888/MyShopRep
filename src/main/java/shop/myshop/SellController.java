@@ -1,5 +1,6 @@
 package shop.myshop;
 
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -390,25 +391,7 @@ public class SellController {
         ObservableList<CatalogView> data = FXCollections.observableArrayList(filteredItems);
         sellTable.setItems(data);
     }
-    // Оновлення суми при зміні значення у catalog
-   /* private void updateCalcField() throws SQLException {
-        String sql = "SELECT price, num FROM catalog";
-        PreparedStatement stmt = Main.conn.prepareStatement(sql);
-        ResultSet rs = stmt.executeQuery();
 
-        double total = 0;
-        while (rs.next()) {
-            double price = rs.getDouble("price");
-            int num = rs.getInt("num");
-            total += price * num; // Обчислення (ціна × кількість)
-        }
-
-        calcField.setText(String.format("%.2f", total)); // Виведення загальної суми у поле calcField
-        updateCurrencyFields(); // Оновлюємо валютні поля після оновлення суми
-    }*/
-
-    // Ваша решта логіки (методи для addToCart, deleteProduct, resetCart, і т.д.)
-    // ...
 
 
 }

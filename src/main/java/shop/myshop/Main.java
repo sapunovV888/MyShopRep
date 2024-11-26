@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import java.io.IOException;
 import java.sql.*;
 
-
 public class Main extends Application {
     public static Connection conn;
     @Override
