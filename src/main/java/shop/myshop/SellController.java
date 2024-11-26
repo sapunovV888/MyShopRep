@@ -1,40 +1,21 @@
 package shop.myshop;
 
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import java.net.URL;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-import static shop.myshop.Main.conn;
+import java.net.http.HttpClient;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 public class SellController {
-
-    private static final String API_KEY = "21b543dc06358232f8e12afc";
-    private static final String API_URL = "https://v6.exchangerate-api.com/v6/" + API_KEY + "/latest/UAH";
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
 
     @FXML
     private Button addButton;
@@ -81,16 +62,23 @@ public class SellController {
     @FXML
     private CheckBox inBag;
 
+    private final Connection conn;
+    private final SellService service;
+
+    public SellController(Connection conn) {
+        this.conn = conn;
+        this.service = new SellService(conn);
+    }
+
     @FXML
     public void initialize() throws SQLException {
+        nCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        catCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+        inCol.setCellValueFactory(new PropertyValueFactory<>("num"));
 
-       nCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-       catCol.setCellValueFactory(new PropertyValueFactory<>("category"));
-       nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-       priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
-       inCol.setCellValueFactory(new PropertyValueFactory<>("num"));
-
-        ObservableList<CatalogView> data = FXCollections.observableArrayList(getModels());
+        ObservableList<CatalogView> data = FXCollections.observableArrayList(service.getModels());
         sellTable.setItems(data);
 
         addButton.setOnAction(event -> {
@@ -136,19 +124,8 @@ public class SellController {
 
     }
 
-
-
     private void updateCalcField() throws SQLException {
-        String sql = "SELECT price, num FROM catalog";
-        PreparedStatement stmt = Main.conn.prepareStatement(sql);
-        ResultSet rs = stmt.executeQuery();
-
-        double total = 0;
-        while (rs.next()) {
-            double price = rs.getDouble("price");
-            int num = rs.getInt("num");
-            total += price * num; // Обчислення (ціна × кількість)
-        }
+        double total = service.calculateTotal();
 
         calcField.setText(String.format("%.2f", total)); // Виведення загальної суми у поле calcField
         updateCurrencyFields();
@@ -174,20 +151,19 @@ public class SellController {
 
         // Пошук товару в базі даних за назвою
         String sqlSelect = "SELECT * FROM catalog WHERE name = ?";
-        PreparedStatement selectStmt = Main.conn.prepareStatement(sqlSelect);
+        PreparedStatement selectStmt = conn.prepareStatement(sqlSelect);
         selectStmt.setString(1, nameInput);
         ResultSet resultSet = selectStmt.executeQuery();
 
         if (resultSet.next()) {
             // Знайдено відповідний запис
             int currentNum = resultSet.getInt("num");
-            double price = resultSet.getDouble("price"); // Отримуємо ціну
             int id = resultSet.getInt("id"); // Отримуємо ID запису
             int updatedNum = currentNum + numToAdd;
 
             // Оновлення даних у базі
             String sqlUpdate = "UPDATE catalog SET num = ? WHERE id = ?";
-            PreparedStatement updateStmt = Main.conn.prepareStatement(sqlUpdate);
+            PreparedStatement updateStmt = conn.prepareStatement(sqlUpdate);
             updateStmt.setInt(1, updatedNum);
             updateStmt.setInt(2, id);
             updateStmt.executeUpdate();
@@ -195,7 +171,7 @@ public class SellController {
             System.out.println("Додано " + numToAdd + " до товару: " + nameInput);
 
             // Оновлення таблиці
-            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(getModels());
+            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
             sellTable.setItems(updatedData);
 
             // Оновлення поля calcField
@@ -216,7 +192,7 @@ public class SellController {
 
         // SQL-запит для вибору товару по назві
         String selectQuery = "SELECT price, num FROM catalog WHERE name = ?";
-        PreparedStatement selectStmt = Main.conn.prepareStatement(selectQuery);
+        PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
         selectStmt.setString(1, productName);
         ResultSet rs = selectStmt.executeQuery();
 
@@ -227,7 +203,7 @@ public class SellController {
 
             // Оновлюємо значення num в таблиці catalog
             String updateQuery = "UPDATE catalog SET num = 0 WHERE name = ?";
-            PreparedStatement updateStmt = Main.conn.prepareStatement(updateQuery);
+            PreparedStatement updateStmt = conn.prepareStatement(updateQuery);
             updateStmt.setString(1, productName);
             updateStmt.executeUpdate();
 
@@ -238,7 +214,7 @@ public class SellController {
             currentCalcText = currentCalcText.replace(',', '.');
 
             // Перетворюємо в число
-            double currentCalcValue = 0.0;
+            double currentCalcValue;
             try {
                 currentCalcValue = Double.parseDouble(currentCalcText);
             } catch (NumberFormatException e) {
@@ -253,7 +229,7 @@ public class SellController {
             updateCurrencyFields();
 
             // Оновлюємо таблицю
-            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(getModels());
+            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
             sellTable.setItems(updatedData);
 
             System.out.println("Товар '" + productName + "' був видалений, поле 'num' встановлено на 0.");
@@ -263,14 +239,13 @@ public class SellController {
     }
 
 
-
     private void resetCart() throws SQLException {
         // Очищення поля calcField
         calcField.setText("");
 
         // SQL-запит для встановлення стовпця `num` в таблиці `catalog` на 0
         String sqlReset = "UPDATE catalog SET num = 0";
-        PreparedStatement resetStmt = Main.conn.prepareStatement(sqlReset);
+        PreparedStatement resetStmt = conn.prepareStatement(sqlReset);
         resetStmt.executeUpdate();
 
         System.out.println("Значення стовпця 'num' встановлено на 0.");
@@ -278,43 +253,14 @@ public class SellController {
         updateCurrencyFields();
 
         // Оновлення таблиці після очищення
-        ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(getModels());
+        ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
         sellTable.setItems(updatedData);
-    }
-
-    private List<CatalogView> getModels() throws SQLException {
-        List<CatalogView> models = new ArrayList<>();
-
-        String sql = """
-                select id, category, name , price, num
-                from catalog 
-        """;
-
-        try (PreparedStatement statement = conn.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                // Створюємо об'єкт CatalogView для кожного рядка результату
-                CatalogView model = new CatalogView(
-                        resultSet.getInt("id"),
-                        resultSet.getString("category"),
-                        resultSet.getString("name"),
-                        resultSet.getDouble("price"),
-                        resultSet.getInt("num")
-                );
-                models.add(model);
-            }
-        }
-
-        return models;
-
-
     }
 
     private void updateCurrencyFields() {
         try {
             // Отримуємо курси валют
-            JsonObject conversionRates = getExchangeRates();
+            JsonObject conversionRates = service.getExchangeRates(HttpClient.newHttpClient());
 
             // Отримуємо курс UAH -> USD та UAH -> EUR
             double uahToUsd = conversionRates.get("USD").getAsDouble();
@@ -339,28 +285,6 @@ public class SellController {
         }
     }
 
-    // Метод для отримання курсів валют через API
-    private JsonObject getExchangeRates() throws Exception {
-        // Створення запиту
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL))
-                .build();
-
-        // Отримуємо відповідь від API
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // Перетворення відповіді на JSON
-        JsonObject jsonResponse = JsonParser.parseString(response.body()).getAsJsonObject();
-
-        // Перевірка на успішну відповідь від API
-        if (jsonResponse.get("result").getAsString().equals("success")) {
-            return jsonResponse.getAsJsonObject("conversion_rates");
-        } else {
-            throw new Exception("Помилка при отриманні курсів валют");
-        }
-    }
-
     // Метод для отримання загальної суми з поля calcField
     private double getTotalUAH() {
         // Перетворюємо значення з calcField в число
@@ -375,14 +299,13 @@ public class SellController {
 
     private void applyFilter(boolean showOnlyInCart) throws SQLException {
         // Отримуємо всі елементи з бази даних
-        List<CatalogView> allItems = getModels();
+        List<CatalogView> allItems = service.getModels();
 
         // Якщо чекбокс активний, фільтруємо список
         List<CatalogView> filteredItems;
         if (showOnlyInCart) {
-            filteredItems = allItems.stream()
-                    .filter(item -> item.getNum() > 0) // Фільтруємо за умовою `num > 0`
-                    .toList();
+            filteredItems = allItems.stream().filter(item -> item.getNum() > 0) // Фільтруємо за умовою `num > 0`
+                .toList();
         } else {
             filteredItems = allItems; // Показуємо всі елементи
         }
@@ -391,7 +314,4 @@ public class SellController {
         ObservableList<CatalogView> data = FXCollections.observableArrayList(filteredItems);
         sellTable.setItems(data);
     }
-
-
-
 }
