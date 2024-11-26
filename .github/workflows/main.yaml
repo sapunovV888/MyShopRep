@@ -12,5 +12,5 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           architecture: x64
-      - name: Run tests with Maven
-        run: mvn -B test
+      - name: Run SpotBugs
+        run: mvn spotbugs:check
