@@ -16,7 +16,9 @@ import java.util.List;
 
 public class SellService {
     private static final String API_KEY = "21b543dc06358232f8e12afc";
-    private static final String API_URL = "https://v6.exchangerate-api.com/v6/" + API_KEY + "/latest/UAH";
+
+    private static final String API_URL = "https://v6.exchangerate-api.com/v6/"
+            + API_KEY + "/latest/UAH";
 
     private final Connection conn;
 
@@ -30,19 +32,19 @@ public class SellService {
         String sql = """
                 select id, category, name , price, num
                 from catalog 
-        """;
+                """;
 
         try (PreparedStatement statement = conn.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+                ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 // Створюємо об'єкт CatalogView для кожного рядка результату
                 CatalogView model = new CatalogView(
-                    resultSet.getInt("id"),
-                    resultSet.getString("category"),
-                    resultSet.getString("name"),
-                    resultSet.getDouble("price"),
-                    resultSet.getInt("num")
+                        resultSet.getInt("id"),
+                        resultSet.getString("category"),
+                        resultSet.getString("name"),
+                        resultSet.getDouble("price"),
+                        resultSet.getInt("num")
                 );
                 models.add(model);
             }
@@ -54,7 +56,7 @@ public class SellService {
     public double calculateTotal() throws SQLException {
         String sql = "SELECT price, num FROM catalog";
         try (PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             double total = 0;
             while (rs.next()) {
@@ -69,8 +71,8 @@ public class SellService {
     // Метод для отримання курсів валют через API
     public JsonObject getExchangeRates(HttpClient client) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(API_URL))
-            .build();
+                .uri(URI.create(API_URL))
+                .build();
 
         // Отримуємо відповідь від API
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

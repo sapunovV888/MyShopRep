@@ -2,9 +2,13 @@ package shop.myshop;
 
 public class CatalogView {
     private int id;
+
     private String category;
+
     private String name;
+
     private double price;
+
     private int num;
 
     public CatalogView(int id, String category, String name, double price, int num) {

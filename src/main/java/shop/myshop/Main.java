@@ -11,8 +11,8 @@ import java.sql.*;
 
 public class Main extends Application {
     private static Connection conn;
-    @Override
 
+    @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Shop.fxml"));
         fxmlLoader.setControllerFactory(c -> new SellController(conn));

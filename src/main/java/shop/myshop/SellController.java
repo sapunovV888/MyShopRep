@@ -63,6 +63,7 @@ public class SellController {
     private CheckBox inBag;
 
     private final Connection conn;
+
     private final SellService service;
 
     public SellController(Connection conn) {
@@ -127,13 +128,14 @@ public class SellController {
     private void updateCalcField() throws SQLException {
         double total = service.calculateTotal();
 
-        calcField.setText(String.format("%.2f", total)); // Виведення загальної суми у поле calcField
+        // Виведення загальної суми у поле calcField
+        calcField.setText(String.format("%.2f", total));
         updateCurrencyFields();
     }
 
     private void addToCart() throws SQLException {
         // Отримуємо введені дані
-        String nameInput = nameField.getText().trim(); // Тепер поле nameField відповідає полю "name" у базі даних
+        String nameInput = nameField.getText().trim();
         String numInput = numField.getText().trim();
 
         if (nameInput.isEmpty() || numInput.isEmpty()) {
@@ -171,7 +173,8 @@ public class SellController {
             System.out.println("Додано " + numToAdd + " до товару: " + nameInput);
 
             // Оновлення таблиці
-            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
+            ObservableList<CatalogView> updatedData = FXCollections
+                    .observableArrayList(service.getModels());
             sellTable.setItems(updatedData);
 
             // Оновлення поля calcField
@@ -218,7 +221,8 @@ public class SellController {
             try {
                 currentCalcValue = Double.parseDouble(currentCalcText);
             } catch (NumberFormatException e) {
-                System.out.println("Помилка при перетворенні значення calcField: " + e.getMessage());
+                System.out.println("Помилка при перетворенні значення calcField: "
+                        + e.getMessage());
                 return;
             }
 
@@ -229,10 +233,12 @@ public class SellController {
             updateCurrencyFields();
 
             // Оновлюємо таблицю
-            ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
+            ObservableList<CatalogView> updatedData = FXCollections
+                    .observableArrayList(service.getModels());
             sellTable.setItems(updatedData);
 
-            System.out.println("Товар '" + productName + "' був видалений, поле 'num' встановлено на 0.");
+            System.out.println("Товар '" + productName
+                    + "' був видалений, поле 'num' встановлено на 0.");
         } else {
             System.out.println("Товар з таким ім'ям не знайдено.");
         }
@@ -253,7 +259,8 @@ public class SellController {
         updateCurrencyFields();
 
         // Оновлення таблиці після очищення
-        ObservableList<CatalogView> updatedData = FXCollections.observableArrayList(service.getModels());
+        ObservableList<CatalogView> updatedData = FXCollections
+                .observableArrayList(service.getModels());
         sellTable.setItems(updatedData);
     }
 
@@ -304,7 +311,8 @@ public class SellController {
         // Якщо чекбокс активний, фільтруємо список
         List<CatalogView> filteredItems;
         if (showOnlyInCart) {
-            filteredItems = allItems.stream().filter(item -> item.getNum() > 0) // Фільтруємо за умовою `num > 0`
+            filteredItems = allItems.stream()
+                    .filter(item -> item.getNum() > 0) // Фільтруємо за умовою `num > 0`
                 .toList();
         } else {
             filteredItems = allItems; // Показуємо всі елементи
