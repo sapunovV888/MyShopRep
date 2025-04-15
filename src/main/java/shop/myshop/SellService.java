@@ -17,6 +17,10 @@ import java.util.List;
 /**
  * Клас {@code SellService} відповідає за бізнес-логіку продажу та
  * взаємодію з базою даних і зовнішнім валютним API.
+ * <p>
+ * Приклади використання кожного методу дивись у {@code SellServiceTest}.
+ *
+ * @see SellServiceTest
  */
 public class SellService {
 
@@ -50,6 +54,8 @@ public class SellService {
      *
      * @return список {@link CatalogView}, що містить інформацію про товари
      * @throws SQLException у разі помилки під час виконання SQL-запиту
+     *
+     * @see SellServiceTest#testGetModelsReturnsCorrectData()
      */
     public List<CatalogView> getModels() throws SQLException {
         List<CatalogView> models = new ArrayList<>();
@@ -60,7 +66,7 @@ public class SellService {
                 """;
 
         try (PreparedStatement statement = conn.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()) {
+             ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 CatalogView model = new CatalogView(
@@ -82,11 +88,13 @@ public class SellService {
      *
      * @return загальна сума (ціна × кількість) усіх товарів
      * @throws SQLException у разі помилки під час роботи з базою даних
+     *
+     * @see SellServiceTest#testCalculateTotal()
      */
     public double calculateTotal() throws SQLException {
         String sql = "SELECT price, num FROM catalog";
         try (PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
             double total = 0;
             while (rs.next()) {
@@ -104,6 +112,9 @@ public class SellService {
      * @param client екземпляр {@link HttpClient} для виконання запиту
      * @return JSON-об'єкт з курсами валют
      * @throws Exception у разі помилки під час запиту або обробки відповіді
+     *
+     * @see SellServiceTest#testGetExchangeRatesSuccess()
+     * @see SellServiceTest#testGetExchangeRatesFailure()
      */
     public JsonObject getExchangeRates(HttpClient client) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
