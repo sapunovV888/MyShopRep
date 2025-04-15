@@ -1,6 +1,5 @@
 package shop.myshop;
 
-
 import com.google.gson.JsonObject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,73 +14,78 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Контролер JavaFX для роботи з вікном продажів. Керує таблицею товарів,
+ * додаванням, видаленням, фільтрацією, підрахунком вартості та конвертацією валют.
+ */
 public class SellController {
 
-    @FXML
-    private Button addButton;
+    // === Компоненти інтерфейсу ===
 
-    @FXML
-    private TextField calcField;
+    @FXML private Button addButton;
 
-    @FXML
-    private TableColumn<CatalogView, String> catCol;
+    @FXML private TextField calcField;
 
-    @FXML
-    private TableColumn<CatalogView, Integer> inCol;
+    @FXML private TableColumn<CatalogView, String> catCol;
 
-    @FXML
-    private TableColumn<CatalogView, Integer> nCol;
+    @FXML private TableColumn<CatalogView, Integer> inCol;
 
-    @FXML
-    private TableColumn<CatalogView, String> nameCol;
+    @FXML private TableColumn<CatalogView, Integer> nCol;
 
-    @FXML
-    private TextField nameField;
+    @FXML private TableColumn<CatalogView, String> nameCol;
 
-    @FXML
-    private TextField numField;
+    @FXML private TextField nameField;
 
-    @FXML
-    private TableColumn<CatalogView, Double> priceCol;
+    @FXML private TextField numField;
 
-    @FXML
-    private Button removeButton;
+    @FXML private TableColumn<CatalogView, Double> priceCol;
 
-    @FXML
-    private Button restartButton;
+    @FXML private Button removeButton;
 
-    @FXML
-    private TableView<CatalogView> sellTable;
+    @FXML private Button restartButton;
 
-    @FXML
-    private TextField usdField;
+    @FXML private TableView<CatalogView> sellTable;
 
-    @FXML
-    private TextField eurField;
+    @FXML private TextField usdField;
 
-    @FXML
-    private CheckBox inBag;
+    @FXML private TextField eurField;
+
+    @FXML private CheckBox inBag;
 
     private final Connection conn;
 
     private final SellService service;
 
+    /**
+     * Конструктор контролера. Приймає з'єднання з БД і ініціалізує сервіс.
+     *
+     * @param conn з'єднання з базою даних
+     */
     public SellController(Connection conn) {
         this.conn = conn;
         this.service = new SellService(conn);
     }
 
+    /**
+     * Ініціалізація інтерфейсу після завантаження FXML.
+     * Заповнює таблицю, налаштовує події кнопок та фільтр.
+     *
+     * @throws SQLException якщо виникає помилка при зверненні до БД
+     */
     @FXML
     public void initialize() throws SQLException {
+        // Налаштування колонок таблиці
         nCol.setCellValueFactory(new PropertyValueFactory<>("id"));
         catCol.setCellValueFactory(new PropertyValueFactory<>("category"));
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
         inCol.setCellValueFactory(new PropertyValueFactory<>("num"));
 
+        // Завантаження початкових даних
         ObservableList<CatalogView> data = FXCollections.observableArrayList(service.getModels());
         sellTable.setItems(data);
 
+        // Прив'язка подій до кнопок
         addButton.setOnAction(event -> {
             try {
                 addToCart();
@@ -114,27 +118,33 @@ public class SellController {
 
         inBag.selectedProperty().addListener((observable, oldValue, newValue) -> {
             try {
-                applyFilter(newValue); // Оновлюємо таблицю залежно від стану чекбоксу
+                applyFilter(newValue);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         });
 
-        // Показуємо всі елементи за замовчуванням
+        // Показуємо всі товари за замовчуванням
         applyFilter(false);
-
     }
 
+    /**
+     * Оновлює поле суми та курси валют.
+     *
+     * @throws SQLException якщо помилка при обчисленні суми
+     */
     private void updateCalcField() throws SQLException {
         double total = service.calculateTotal();
-
-        // Виведення загальної суми у поле calcField
         calcField.setText(String.format("%.2f", total));
         updateCurrencyFields();
     }
 
+    /**
+     * Додає вказану кількість товару до "корзини".
+     *
+     * @throws SQLException при помилці оновлення БД
+     */
     private void addToCart() throws SQLException {
-        // Отримуємо введені дані
         String nameInput = nameField.getText().trim();
         String numInput = numField.getText().trim();
 
@@ -151,19 +161,18 @@ public class SellController {
             return;
         }
 
-        // Пошук товару в базі даних за назвою
+        // Пошук товару
         String sqlSelect = "SELECT * FROM catalog WHERE name = ?";
         PreparedStatement selectStmt = conn.prepareStatement(sqlSelect);
         selectStmt.setString(1, nameInput);
         ResultSet resultSet = selectStmt.executeQuery();
 
         if (resultSet.next()) {
-            // Знайдено відповідний запис
             int currentNum = resultSet.getInt("num");
-            int id = resultSet.getInt("id"); // Отримуємо ID запису
+            int id = resultSet.getInt("id");
             int updatedNum = currentNum + numToAdd;
 
-            // Оновлення даних у базі
+            // Оновлення запису
             String sqlUpdate = "UPDATE catalog SET num = ? WHERE id = ?";
             PreparedStatement updateStmt = conn.prepareStatement(sqlUpdate);
             updateStmt.setInt(1, updatedNum);
@@ -172,20 +181,19 @@ public class SellController {
 
             System.out.println("Додано " + numToAdd + " до товару: " + nameInput);
 
-            // Оновлення таблиці
-            ObservableList<CatalogView> updatedData = FXCollections
-                    .observableArrayList(service.getModels());
-            sellTable.setItems(updatedData);
-
-            // Оновлення поля calcField
+            // Оновлення інтерфейсу
+            sellTable.setItems(FXCollections.observableArrayList(service.getModels()));
             updateCalcField();
-
-
         } else {
             System.out.println("Товар не знайдено!");
         }
     }
 
+    /**
+     * Видаляє вибраний товар (встановлює кількість на 0).
+     *
+     * @throws SQLException при зверненні до БД
+     */
     private void deleteProduct() throws SQLException {
         String productName = nameField.getText().trim();
         if (productName.isEmpty()) {
@@ -193,133 +201,90 @@ public class SellController {
             return;
         }
 
-        // SQL-запит для вибору товару по назві
         String selectQuery = "SELECT price, num FROM catalog WHERE name = ?";
         PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
         selectStmt.setString(1, productName);
         ResultSet rs = selectStmt.executeQuery();
 
-        // Якщо товар знайдений
         if (rs.next()) {
             double price = rs.getDouble("price");
             int num = rs.getInt("num");
 
-            // Оновлюємо значення num в таблиці catalog
             String updateQuery = "UPDATE catalog SET num = 0 WHERE name = ?";
             PreparedStatement updateStmt = conn.prepareStatement(updateQuery);
             updateStmt.setString(1, productName);
             updateStmt.executeUpdate();
 
-            // Отримуємо поточне значення з calcField
-            String currentCalcText = calcField.getText();
-
-            // Якщо є кома, замінюємо її на точку
-            currentCalcText = currentCalcText.replace(',', '.');
-
-            // Перетворюємо в число
-            double currentCalcValue;
-            try {
-                currentCalcValue = Double.parseDouble(currentCalcText);
-            } catch (NumberFormatException e) {
-                System.out.println("Помилка при перетворенні значення calcField: "
-                        + e.getMessage());
-                return;
-            }
-
-            // Оновлюємо calcField, віднімаючи num * price
+            double currentCalcValue = getTotalUAH();
             double newCalcValue = currentCalcValue - (num * price);
             calcField.setText(String.format("%.2f", newCalcValue));
 
             updateCurrencyFields();
+            sellTable.setItems(FXCollections.observableArrayList(service.getModels()));
 
-            // Оновлюємо таблицю
-            ObservableList<CatalogView> updatedData = FXCollections
-                    .observableArrayList(service.getModels());
-            sellTable.setItems(updatedData);
-
-            System.out.println("Товар '" + productName
-                    + "' був видалений, поле 'num' встановлено на 0.");
+            System.out.println("Товар '" + productName + "' був видалений.");
         } else {
             System.out.println("Товар з таким ім'ям не знайдено.");
         }
     }
 
-
+    /**
+     * Очищає корзину: скидає кількість усіх товарів та оновлює суму.
+     *
+     * @throws SQLException при помилці запиту
+     */
     private void resetCart() throws SQLException {
-        // Очищення поля calcField
         calcField.setText("");
-
-        // SQL-запит для встановлення стовпця `num` в таблиці `catalog` на 0
-        String sqlReset = "UPDATE catalog SET num = 0";
-        PreparedStatement resetStmt = conn.prepareStatement(sqlReset);
+        PreparedStatement resetStmt = conn.prepareStatement("UPDATE catalog SET num = 0");
         resetStmt.executeUpdate();
 
-        System.out.println("Значення стовпця 'num' встановлено на 0.");
-
         updateCurrencyFields();
-
-        // Оновлення таблиці після очищення
-        ObservableList<CatalogView> updatedData = FXCollections
-                .observableArrayList(service.getModels());
-        sellTable.setItems(updatedData);
+        sellTable.setItems(FXCollections.observableArrayList(service.getModels()));
+        System.out.println("Корзина очищена.");
     }
 
+    /**
+     * Оновлює поля валют на основі поточного курсу та загальної суми.
+     */
     private void updateCurrencyFields() {
         try {
-            // Отримуємо курси валют
-            JsonObject conversionRates = service.getExchangeRates(HttpClient.newHttpClient());
-
-            // Отримуємо курс UAH -> USD та UAH -> EUR
-            double uahToUsd = conversionRates.get("USD").getAsDouble();
-            double uahToEur = conversionRates.get("EUR").getAsDouble();
-
-            // Отримуємо загальну суму у UAH з calcField
+            JsonObject rates = service.getExchangeRates(HttpClient.newHttpClient());
             double totalUAH = getTotalUAH();
-
-            // Конвертуємо загальну суму в долари та євро
-            double totalUSD = totalUAH * uahToUsd;
-            double totalEUR = totalUAH * uahToEur;
-
-            // Виводимо результат у відповідні поля
-            usdField.setText(String.format("%.2f", totalUSD));
-            eurField.setText(String.format("%.2f", totalEUR));
-
+            usdField.setText(String.format("%.2f", totalUAH * rates.get("USD").getAsDouble()));
+            eurField.setText(String.format("%.2f", totalUAH * rates.get("EUR").getAsDouble()));
         } catch (Exception e) {
             e.printStackTrace();
-            // Якщо виникає помилка, вивести повідомлення про помилку в поля
             usdField.setText("Помилка");
             eurField.setText("Помилка");
         }
     }
 
-    // Метод для отримання загальної суми з поля calcField
+    /**
+     * Отримує загальну суму з поля calcField у гривнях.
+     *
+     * @return значення у вигляді double
+     */
     private double getTotalUAH() {
-        // Перетворюємо значення з calcField в число
-        String calcText = calcField.getText().replace(',', '.'); // Заміняємо кому на точку
+        String calcText = calcField.getText().replace(',', '.');
         try {
-            return Double.parseDouble(calcText); // Перетворюємо на число
+            return Double.parseDouble(calcText);
         } catch (NumberFormatException e) {
-            System.out.println("Помилка при конвертації суми з поля calcField: " + e.getMessage());
-            return 0.0; // Якщо значення неправильне, повертаємо 0
+            System.out.println("Помилка: " + e.getMessage());
+            return 0.0;
         }
     }
 
+    /**
+     * Фільтрує таблицю: показує всі товари або тільки ті, що в корзині.
+     *
+     * @param showOnlyInCart true – показати лише товари з num > 0
+     * @throws SQLException при помилці доступу до БД
+     */
     private void applyFilter(boolean showOnlyInCart) throws SQLException {
-        // Отримуємо всі елементи з бази даних
         List<CatalogView> allItems = service.getModels();
-
-        // Якщо чекбокс активний, фільтруємо список
-        List<CatalogView> filteredItems;
-        if (showOnlyInCart) {
-            filteredItems = allItems.stream()
-                    .filter(item -> item.getNum() > 0) // Фільтруємо за умовою `num > 0`
-                .toList();
-        } else {
-            filteredItems = allItems; // Показуємо всі елементи
-        }
-
-        // Оновлюємо вміст таблиці
-        ObservableList<CatalogView> data = FXCollections.observableArrayList(filteredItems);
-        sellTable.setItems(data);
+        List<CatalogView> filteredItems = showOnlyInCart
+                ? allItems.stream().filter(item -> item.getNum() > 0).toList()
+                : allItems;
+        sellTable.setItems(FXCollections.observableArrayList(filteredItems));
     }
 }

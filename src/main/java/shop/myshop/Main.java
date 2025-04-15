@@ -5,7 +5,6 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
