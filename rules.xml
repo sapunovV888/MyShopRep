@@ -39,5 +39,22 @@
         <!-- Порожній рядок між логічними блоками (напр. між методами, після змінних) -->
         <module name="EmptyLineSeparator"/>
 
+        <module name="JavadocMethod">
+            <property name="accessLevel" value="public"/>
+            <property name="required" value="true"/>
+        </module>
+
+        <module name="JavadocType">
+            <property name="required" value="true"/>
+        </module>
+
+        <module name="JavadocStyle">
+            <property name="allowMissingJavadoc" value="false"/>
+        </module>
+
+        <module name="JavadocVariable">
+            <property name="required" value="true"/>
+        </module>
+
     </module>
 </module>
