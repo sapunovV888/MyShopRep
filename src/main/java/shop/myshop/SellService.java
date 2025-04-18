@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Клас {@code SellService} відповідає за бізнес-логіку продажу та
@@ -23,6 +24,8 @@ import java.util.List;
  * @see SellServiceTest
  */
 public class SellService {
+
+    private static final Logger logger = Logger.getLogger(SellService.class.getName());
 
     /**
      * API-ключ для доступу до ExchangeRate API.
@@ -92,6 +95,7 @@ public class SellService {
      * @see SellServiceTest#testCalculateTotal()
      */
     public double calculateTotal() throws SQLException {
+        logger.info("Підрахунок загальної вартості товарів");
         String sql = "SELECT price, num FROM catalog";
         try (PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -117,6 +121,7 @@ public class SellService {
      * @see SellServiceTest#testGetExchangeRatesFailure()
      */
     public JsonObject getExchangeRates(HttpClient client) throws Exception {
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))
                 .build();

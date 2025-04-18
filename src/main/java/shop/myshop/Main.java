@@ -9,7 +9,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.io.IOException;
-import java.sql.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Головний клас програми {@code Main}, який є точкою входу в JavaFX-додаток.
@@ -23,6 +25,9 @@ public class Main extends Application {
      */
     private static Connection conn;
 
+    // Створення логера для запису подій
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+
     /**
      * Метод, який викликається при запуску JavaFX-додатку.
      * Завантажує інтерфейс з FXML-файлу та встановлює контролер {@link SellController}.
@@ -32,11 +37,15 @@ public class Main extends Application {
      */
     @Override
     public void start(Stage stage) throws IOException {
+        logger.info("Запуск додатку...");
+
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Shop.fxml"));
         fxmlLoader.setControllerFactory(c -> new SellController(conn));
         Scene scene = new Scene(fxmlLoader.load());
         stage.setScene(scene);
         stage.show();
+
+        logger.info("Головна сцена відображена.");
     }
 
     /**
@@ -49,10 +58,9 @@ public class Main extends Application {
 
         try {
             conn = DriverManager.getConnection(url);
-            System.out.println("Connection successfully");
+            logger.info("Успішне підключення до бази даних.");
         } catch (SQLException e) {
-            System.out.println("Error connecting to a database: "
-                    + e.getMessage() + "\nExiting...");
+            logger.log(Level.SEVERE, "Помилка підключення до бази даних: " + e.getMessage(), e);
 
             Platform.exit();
             System.exit(1);
@@ -66,6 +74,12 @@ public class Main extends Application {
      * @param args аргументи командного рядка (не використовуються)
      */
     public static void main(String[] args) {
+        // Налаштування логера на виведення в консоль
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        logger.addHandler(consoleHandler);
+        logger.setLevel(Level.ALL);  // Налаштовуємо рівень логування на ALL, щоб бачити всі повідомлення
+
+        logger.info("Програма запускається...");
         connectToDb();
         launch();
     }
